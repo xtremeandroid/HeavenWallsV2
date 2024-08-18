@@ -1,5 +1,4 @@
 import Image from "next/image";
-import Link from "next/link";
 
 interface Props {
   id: string;
@@ -8,17 +7,14 @@ interface Props {
 
 export const WallsCard = ({ imageUrl, id }: Props) => {
   return (
-    <Link
-      href={`/wall/${id}`}
-      className="relative h-52 aspect-video rounded-lg hover:scale-105"
-    >
+    <div className="h-52 aspect-video rounded-lg hover:scale-105 relative">
       <Image
         src={imageUrl}
         fill
-        alt="wall-card"
+        alt={`wall-card-${id}`}
         className="rounded-lg object-cover"
         sizes="100%"
       />
-    </Link>
+    </div>
   );
 };
