@@ -1,43 +1,60 @@
 import { WallsCard } from "@/components/WallsCard";
-import { useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery } from "@tanstack/react-query";
+import { useEffect } from "react";
+import { useInView } from "react-intersection-observer";
 
 export default function PageContent() {
-  const fetchTodo = async () => {
+  const { inView, ref } = useInView();
+
+  const fetchTodo = async ({ pageParam }: { pageParam: number }) => {
     const response = await fetch(
-      `https://heaven-walls-api.vercel.app/api/wallhaven/random`
+      `https://heaven-walls-api.vercel.app/api/wallhaven/random?page=${pageParam}`
     );
-    if (!response.ok) {
-      throw new Error("API ERROR");
-    }
     return response.json();
   };
 
-  const { data, isLoading, isError } = useQuery({
+  const {
+    data,
+    status,
+    error,
+    fetchNextPage,
+    isFetchingNextPage,
+    hasNextPage,
+  } = useInfiniteQuery({
     queryKey: ["walls"],
-    queryFn: () => fetchTodo(),
+    queryFn: fetchTodo,
+    getNextPageParam: (lastPage, allPages) => {
+      return lastPage.length ? allPages.length + 1 : undefined;
+    },
+    initialPageParam: 1,
   });
 
-  if (isLoading) {
-    return <div className="min-h-screen">Loading...</div>;
-  }
+  useEffect(() => {
+    if (inView && hasNextPage && !isFetchingNextPage) {
+      fetchNextPage();
+    }
+  }, [inView, hasNextPage, isFetchingNextPage]);
 
-  if (isError) {
-    return <div className="min-h-screen">Error loading data</div>;
-  }
+  if (status === "pending") return <div>Loading...</div>;
+  if (status === "error") return <div>Error Message: {error.message}</div>;
 
-  console.log(data);
+  const content = data?.pages.map((page: any) => {
+    return page.data.map((wall: any) => {
+      return (
+        <WallsCard key={wall.id} id={wall.id} imageUrl={wall?.thumbs?.small} />
+      );
+    });
+  });
 
   return (
     <div className="min-h-screen md:max-w-7xl mx-auto p-8 flex justify-center">
       <div className="w-full h-fit flex gap-4 flex-wrap justify-center md:justify-start">
-        {data?.data?.length > 0 &&
-          data?.data?.map((wall: any) => (
-            <WallsCard
-              key={wall.id}
-              imageUrl={wall?.thumbs?.small}
-              id={wall.id}
-            />
-          ))}
+        {content}
+        <div ref={ref} className="h-10 w-full flex justify-center items-center">
+          {isFetchingNextPage && (
+            <div className="font-semibold text-lg">Loading more Walls...</div>
+          )}
+        </div>
       </div>
     </div>
   );

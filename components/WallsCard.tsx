@@ -8,16 +8,17 @@ interface Props {
 
 export const WallsCard = ({ imageUrl, id }: Props) => {
   return (
-    <div className="h-52 aspect-video relative rounded-lg hover:scale-105">
-      <Link href={`/wall/${id}`}>
-        <Image
-          src={imageUrl}
-          fill
-          alt="wall-card"
-          objectFit="cover"
-          className="rounded-lg"
-        />
-      </Link>
-    </div>
+    <Link
+      href={`/wall/${id}`}
+      className="relative h-52 aspect-video rounded-lg hover:scale-105"
+    >
+      <Image
+        src={imageUrl}
+        fill
+        alt="wall-card"
+        className="rounded-lg object-cover"
+        sizes="100%"
+      />
+    </Link>
   );
 };
