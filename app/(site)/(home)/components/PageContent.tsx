@@ -27,11 +27,11 @@ export default function PageContent() {
       return lastPage?.data?.length ? allPages.length + 1 : undefined;
     },
     initialPageParam: 1,
+    refetchOnWindowFocus: false,
   });
 
   useEffect(() => {
     if (inView && !isFetchingNextPage && hasNextPage) {
-      console.log("loading more walls...");
       fetchNextPage();
     }
   }, [inView, hasNextPage, isFetchingNextPage]);
