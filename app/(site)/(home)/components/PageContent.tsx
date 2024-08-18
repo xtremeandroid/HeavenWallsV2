@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 export default function PageContent() {
   const fetchTodo = async () => {
     const response = await fetch(
-      `https://heaven-walls-api.vercel.app/api/wallhaven/home`
+      `https://heaven-walls-api.vercel.app/api/wallhaven/random`
     );
     if (!response.ok) {
       throw new Error("API ERROR");
