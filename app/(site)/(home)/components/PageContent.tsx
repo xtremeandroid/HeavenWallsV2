@@ -30,7 +30,8 @@ export default function PageContent() {
   });
 
   useEffect(() => {
-    if (inView && hasNextPage && !isFetchingNextPage) {
+    if (inView && !isFetchingNextPage && hasNextPage) {
+      console.log("loading more walls...");
       fetchNextPage();
     }
   }, [inView, hasNextPage, isFetchingNextPage]);
@@ -50,10 +51,11 @@ export default function PageContent() {
     <div className="min-h-screen md:max-w-7xl mx-auto p-8 flex justify-center">
       <div className="w-full h-fit flex gap-4 flex-wrap justify-center md:justify-start">
         {content}
-        <div ref={ref}>
+        <div ref={ref} className="flex justify-center items-center w-full">
           {isFetchingNextPage && (
             <p className="font-semibold">Loading More Walls.....</p>
           )}
+          {!hasNextPage && <p className="font-semibold">No More Walls</p>}
         </div>
       </div>
     </div>
