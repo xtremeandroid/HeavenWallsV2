@@ -8,7 +8,7 @@ export default function PageContent() {
 
   const fetchTodo = async ({ pageParam }: { pageParam: number }) => {
     const response = await fetch(
-      `https://heaven-walls-api.vercel.app/api/wallhaven/home?page=${pageParam}`
+      `https://heaven-walls-api.vercel.app/api/wallhaven/random?page=${pageParam}`
     );
     return response.json();
   };
@@ -24,7 +24,7 @@ export default function PageContent() {
     queryKey: ["walls"],
     queryFn: fetchTodo,
     getNextPageParam: (lastPage, allPages) => {
-      return lastPage.length ? allPages.length + 1 : undefined;
+      return lastPage?.data?.length ? allPages.length + 1 : undefined;
     },
     initialPageParam: 1,
   });
@@ -40,7 +40,7 @@ export default function PageContent() {
   if (status === "error") return <div>Error Message: {error.message}</div>;
 
   const content = data?.pages.map((pages: any) => {
-    return pages.data.map((wall: any, index: number) => {
+    return pages?.data?.map((wall: any, index: number) => {
       return (
         <WallsCard key={wall.id} id={wall.id} imageUrl={wall?.thumbs?.small} />
       );
@@ -48,14 +48,16 @@ export default function PageContent() {
   });
 
   return (
-    <div className="min-h-screen md:max-w-7xl mx-auto p-8 flex justify-center">
-      <div className="w-full h-fit flex gap-4 flex-wrap justify-center md:justify-start">
+    <div className="min-h-screen p-8 flex justify-center">
+      <div className="w-full h-fit flex gap-4 flex-wrap justify-center items-center">
         {content}
         <div ref={ref} className="flex justify-center items-center w-full">
           {isFetchingNextPage && (
-            <p className="font-semibold">Loading More Walls.....</p>
+            <p className="font-semibold">{`Loading More Walls.....`}</p>
           )}
-          {!hasNextPage && <p className="font-semibold">No More Walls</p>}
+          {!hasNextPage && (
+            <p className="font-semibold">{`No More Walls! Check Back Later :)`}</p>
+          )}
         </div>
       </div>
     </div>
