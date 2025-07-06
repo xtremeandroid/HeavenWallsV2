@@ -1,8 +1,8 @@
+"use client";
 import { WallsCard } from "@/components/WallsCard";
 import WallpaperModal from "@/components/WallpaperModal";
-import { WallpaperGridSkeleton } from "@/components/Skeletons";
-import useWallsCartStore from "@/store/wallsCart.store";
 import { useInfiniteQuery } from "@tanstack/react-query";
+import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useInView } from "react-intersection-observer";
 
@@ -21,17 +21,63 @@ interface Wallpaper {
   created_at?: string;
 }
 
-export default function PageContent() {
+const categoryInfo: Record<string, { name: string; description: string; icon: string }> = {
+  nature: {
+    name: "Nature",
+    description: "Beautiful landscapes, forests, mountains, and natural scenery",
+    icon: "🌿"
+  },
+  abstract: {
+    name: "Abstract",
+    description: "Creative and artistic abstract designs and patterns",
+    icon: "🎨"
+  },
+  technology: {
+    name: "Technology",
+    description: "Futuristic tech, gadgets, and digital art",
+    icon: "💻"
+  },
+  space: {
+    name: "Space",
+    description: "Galaxies, planets, stars, and cosmic landscapes",
+    icon: "🚀"
+  },
+  cars: {
+    name: "Cars",
+    description: "Sports cars, vintage automobiles, and racing",
+    icon: "🏎️"
+  },
+  animals: {
+    name: "Animals",
+    description: "Wildlife, pets, and beautiful animal photography",
+    icon: "🦁"
+  },
+  art: {
+    name: "Art",
+    description: "Digital art, paintings, and creative illustrations",
+    icon: "🖼️"
+  }
+};
+
+export default function CategoryPage() {
+  const params = useParams();
+  const slug = params.slug as string;
   const { inView, ref } = useInView();
-  const { walls } = useWallsCartStore();
   const [selectedWallpaper, setSelectedWallpaper] = useState<Wallpaper | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [sortBy, setSortBy] = useState<"latest" | "popular" | "random">("latest");
 
-  console.log("Selected Walls: ", walls);
+  const category = categoryInfo[slug] || {
+    name: slug.charAt(0).toUpperCase() + slug.slice(1),
+    description: `Wallpapers in the ${slug} category`,
+    icon: "📁"
+  };
 
-  const fetchTodo = async ({ pageParam }: { pageParam: number }) => {
+  const fetchCategoryWallpapers = async ({ pageParam }: { pageParam: number }) => {
+    // In a real app, you'd filter by category
+    // For now, we'll simulate category-specific data
     const response = await fetch(
-      `https://heaven-walls-api.vercel.app/api/wallhaven/random?page=${pageParam}`
+      `https://heaven-walls-api.vercel.app/api/wallhaven/random?page=${pageParam}&category=${slug}`
     );
     return response.json();
   };
@@ -44,8 +90,8 @@ export default function PageContent() {
     isFetchingNextPage,
     hasNextPage,
   } = useInfiniteQuery({
-    queryKey: ["walls"],
-    queryFn: fetchTodo,
+    queryKey: ["category-walls", slug, sortBy],
+    queryFn: fetchCategoryWallpapers,
     getNextPageParam: (lastPage, allPages) => {
       return lastPage?.data?.length ? allPages.length + 1 : undefined;
     },
@@ -71,33 +117,14 @@ export default function PageContent() {
 
   if (status === "pending")
     return (
-      <div className="min-h-screen p-4 md:p-8">
-        {/* Header Section Skeleton */}
-        <div className="max-w-7xl mx-auto mb-8">
-          <div className="text-center space-y-4">
-            <div className="h-10 bg-gray-800 rounded-lg w-96 mx-auto animate-pulse"></div>
-            <div className="h-6 bg-gray-800 rounded-lg w-2/3 mx-auto animate-pulse"></div>
-          </div>
-          
-          {/* Stats Skeleton */}
-          <div className="flex justify-center mt-8">
-            <div className="flex space-x-8 text-center">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="animate-pulse">
-                  <div className="h-8 w-16 bg-gray-800 rounded mb-2"></div>
-                  <div className="h-4 w-20 bg-gray-800 rounded"></div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Wallpapers Grid Skeleton */}
-        <div className="max-w-7xl mx-auto">
-          <WallpaperGridSkeleton count={20} />
+      <div className="min-h-screen flex justify-center items-center font-medium text-2xl">
+        <div className="flex flex-col items-center space-y-4">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+          <p>Loading {category.name} wallpapers...</p>
         </div>
       </div>
     );
+
   if (status === "error")
     return (
       <div className="min-h-screen flex justify-center items-center font-medium text-2xl">
@@ -107,7 +134,7 @@ export default function PageContent() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 15.5c-.77.833.192 2.5 1.732 2.5z" />
             </svg>
           </div>
-          <p className="text-red-500">Failed to load wallpapers</p>
+          <p className="text-red-500">Failed to load {category.name} wallpapers</p>
           <p className="text-gray-500 text-base">Error: {error.message}</p>
           <button 
             onClick={() => window.location.reload()} 
@@ -121,24 +148,26 @@ export default function PageContent() {
 
   const content = data?.pages.map((pages: any) => {
     return pages?.data?.map((wall: any, index: number) => {
-      // Enhanced wallpaper data with mock additional info
       const enhancedWall: Wallpaper = {
-        id: wall.id,
-        thumbs: wall.thumbs,
+        id: wall.id || `${slug}-${index}`,
+        thumbs: wall.thumbs || {
+          small: `https://th.wallhaven.cc/small/5g/${slug}-${index}.jpg`,
+          large: `https://w.wallhaven.cc/full/5g/wallhaven-${slug}-${index}.jpg`,
+        },
         resolution: wall.resolution || "1920x1080",
-        category: wall.category || ["Nature", "Abstract", "Technology", "Space", "Cars"][Math.floor(Math.random() * 5)],
-        tags: wall.tags || ["wallpaper", "background", "desktop"],
+        category: category.name,
+        tags: wall.tags || [slug, "wallpaper", "background"],
         views: Math.floor(Math.random() * 10000) + 1000,
         downloads: Math.floor(Math.random() * 5000) + 500,
         created_at: wall.created_at || new Date().toISOString(),
       };
 
       return (
-        <div key={wall.id} onClick={() => handleWallpaperClick(enhancedWall)}>
+        <div key={wall.id || `${slug}-${index}`} onClick={() => handleWallpaperClick(enhancedWall)}>
           <WallsCard 
-            id={wall.id} 
-            imageUrl={wall?.thumbs?.small}
-            fullImageUrl={wall?.thumbs?.large || wall?.thumbs?.original}
+            id={enhancedWall.id}
+            imageUrl={enhancedWall.thumbs.small}
+            fullImageUrl={enhancedWall.thumbs.large || enhancedWall.thumbs.original}
             resolution={enhancedWall.resolution}
             category={enhancedWall.category}
             tags={enhancedWall.tags}
@@ -151,32 +180,33 @@ export default function PageContent() {
   return (
     <>
       <div className="min-h-screen p-4 md:p-8">
-        {/* Header Section */}
+        {/* Header */}
         <div className="max-w-7xl mx-auto mb-8">
-          <div className="text-center space-y-4">
-            <h1 className="text-3xl md:text-4xl font-bold text-white">
-              Discover Amazing Wallpapers
-            </h1>
-            <p className="text-gray-400 text-lg max-w-2xl mx-auto">
-              High-quality wallpapers for your desktop, mobile, and tablet. Browse thousands of stunning images.
-            </p>
-          </div>
-          
-          {/* Stats */}
-          <div className="flex justify-center mt-8">
-            <div className="flex space-x-8 text-center">
-              <div>
-                <p className="text-2xl font-bold text-blue-400">10K+</p>
-                <p className="text-gray-400 text-sm">Wallpapers</p>
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between">
+            <div className="mb-4 md:mb-0">
+              <div className="flex items-center space-x-3 mb-2">
+                <span className="text-3xl">{category.icon}</span>
+                <h1 className="text-3xl md:text-4xl font-bold text-white">
+                  {category.name} Wallpapers
+                </h1>
               </div>
-              <div>
-                <p className="text-2xl font-bold text-green-400">50K+</p>
-                <p className="text-gray-400 text-sm">Downloads</p>
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-purple-400">100+</p>
-                <p className="text-gray-400 text-sm">Categories</p>
-              </div>
+              <p className="text-gray-400 text-lg">
+                {category.description}
+              </p>
+            </div>
+            
+            {/* Sort Options */}
+            <div className="flex items-center space-x-2">
+              <span className="text-gray-400 text-sm">Sort by:</span>
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as any)}
+                className="bg-gray-800 text-white border border-gray-600 rounded-lg px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
+              >
+                <option value="latest">Latest</option>
+                <option value="popular">Most Popular</option>
+                <option value="random">Random</option>
+              </select>
             </div>
           </div>
         </div>
@@ -195,12 +225,12 @@ export default function PageContent() {
             {isFetchingNextPage && (
               <div className="flex flex-col items-center space-y-4">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-                <p className="font-semibold text-blue-400">Loading more wallpapers...</p>
+                <p className="font-semibold text-blue-400">Loading more {category.name} wallpapers...</p>
               </div>
             )}
             {!hasNextPage && content && (
               <div className="text-center space-y-2">
-                <p className="font-semibold text-gray-400">🎉 You've seen all available wallpapers!</p>
+                <p className="font-semibold text-gray-400">🎉 You've seen all {category.name} wallpapers!</p>
                 <p className="text-gray-500 text-sm">Check back later for new additions</p>
               </div>
             )}
