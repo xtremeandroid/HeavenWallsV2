@@ -2,6 +2,7 @@ import { WallsCard } from "@/components/WallsCard";
 import WallpaperModal from "@/components/WallpaperModal";
 import { WallpaperGridSkeleton } from "@/components/Skeletons";
 import useWallsCartStore from "@/store/wallsCart.store";
+import { API_CONFIG, fetchWithFallback } from "@/config/api";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { useInView } from "react-intersection-observer";
@@ -30,9 +31,7 @@ export default function PageContent() {
   console.log("Selected Walls: ", walls);
 
   const fetchTodo = async ({ pageParam }: { pageParam: number }) => {
-    const response = await fetch(
-      `https://heaven-walls-api.vercel.app/api/wallhaven/random?page=${pageParam}`
-    );
+    const response = await fetchWithFallback(API_CONFIG.ENDPOINTS.RANDOM, { page: pageParam });
     return response.json();
   };
 
@@ -57,7 +56,7 @@ export default function PageContent() {
     if (inView && !isFetchingNextPage && hasNextPage) {
       fetchNextPage();
     }
-  }, [inView, hasNextPage, isFetchingNextPage]);
+  }, [inView, hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   const handleWallpaperClick = (wallpaper: Wallpaper) => {
     setSelectedWallpaper(wallpaper);
@@ -200,7 +199,7 @@ export default function PageContent() {
             )}
             {!hasNextPage && content && (
               <div className="text-center space-y-2">
-                <p className="font-semibold text-gray-400">🎉 You've seen all available wallpapers!</p>
+                <p className="font-semibold text-gray-400">🎉 You&apos;ve seen all available wallpapers!</p>
                 <p className="text-gray-500 text-sm">Check back later for new additions</p>
               </div>
             )}

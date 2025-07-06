@@ -1,9 +1,10 @@
 "use client";
 import { WallsCard } from "@/components/WallsCard";
 import WallpaperModal from "@/components/WallpaperModal";
+import { API_CONFIG, fetchWithFallback } from "@/config/api";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useInView } from "react-intersection-observer";
 
 interface Wallpaper {
@@ -21,7 +22,7 @@ interface Wallpaper {
   created_at?: string;
 }
 
-export default function SearchPage() {
+function SearchPage() {
   const searchParams = useSearchParams();
   const query = searchParams.get("q") || "";
   const { inView, ref } = useInView();
@@ -30,11 +31,22 @@ export default function SearchPage() {
   const [sortBy, setSortBy] = useState<"relevance" | "latest" | "popular">("relevance");
 
   const fetchSearchResults = async ({ pageParam }: { pageParam: number }) => {
-    // In a real app, you'd search your API
-    // For now, we'll simulate search results
-    const response = await fetch(
-      `https://heaven-walls-api.vercel.app/api/wallhaven/search?q=${encodeURIComponent(query)}&page=${pageParam}&sort=${sortBy}`
-    );
+    const params: Record<string, any> = {
+      page: pageParam,
+      q: query
+    };
+
+    // Map sort options to API parameters
+    if (sortBy === 'popular') {
+      params.sort = 'toplist';
+      params.toprange = '1M';
+    } else if (sortBy === 'latest') {
+      params.sort = 'date_added';
+    } else {
+      params.sort = 'relevance';
+    }
+
+    const response = await fetchWithFallback(API_CONFIG.ENDPOINTS.SEARCH, params);
     return response.json();
   };
 
@@ -60,7 +72,7 @@ export default function SearchPage() {
     if (inView && !isFetchingNextPage && hasNextPage) {
       fetchNextPage();
     }
-  }, [inView, hasNextPage, isFetchingNextPage]);
+  }, [inView, hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   const handleWallpaperClick = (wallpaper: Wallpaper) => {
     setSelectedWallpaper(wallpaper);
@@ -95,7 +107,7 @@ export default function SearchPage() {
       <div className="min-h-screen flex justify-center items-center font-medium text-2xl">
         <div className="flex flex-col items-center space-y-4">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
-          <p>Searching for "{query}"...</p>
+          <p>Searching for &ldquo;{query}&rdquo;...</p>
         </div>
       </div>
     );
@@ -263,3 +275,20 @@ export default function SearchPage() {
     </>
   );
 }
+
+function SearchPageWrapper() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex justify-center items-center font-medium text-2xl">
+        <div className="flex flex-col items-center space-y-4">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+          <p>Loading search...</p>
+        </div>
+      </div>
+    }>
+      <SearchPage />
+    </Suspense>
+  );
+}
+
+export default SearchPageWrapper;

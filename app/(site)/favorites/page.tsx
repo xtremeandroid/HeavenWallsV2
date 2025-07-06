@@ -158,7 +158,7 @@ export default function FavoritesPage() {
                 <WallsCard
                   id={wallpaper.id}
                   imageUrl={wallpaper.thumbs.small}
-                  fullImageUrl={wallpaper.thumbs.large || wallpaper.thumbs.original}
+                  fullImageUrl={wallpaper.thumbs.large || (wallpaper.thumbs as any).original || wallpaper.thumbs.small}
                   resolution={wallpaper.resolution}
                   category={wallpaper.category}
                   tags={wallpaper.tags}

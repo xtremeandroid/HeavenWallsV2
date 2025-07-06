@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import Image from "next/image";
 
 const categories = [
   {
@@ -126,10 +127,11 @@ export default function CategoriesPage() {
             >
               {/* Background Image */}
               <div className="h-48 relative">
-                <img
+                <Image
                   src={category.image}
                   alt={category.name}
-                  className="w-full h-full object-cover"
+                  fill
+                  className="object-cover"
                   onError={(e) => {
                     e.currentTarget.src = `https://via.placeholder.com/400x300/374151/9CA3AF?text=${category.icon}`;
                   }}

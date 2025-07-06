@@ -1,10 +1,8 @@
 "use client";
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
 import "./globals.css";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
-const inter = Inter({ subsets: ["latin"] });
 const queryClient = new QueryClient();
 
 export default function RootLayout({
@@ -14,7 +12,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={inter.className}>
+      <body className="font-sans">
         <QueryClientProvider client={queryClient}>
           {children}
         </QueryClientProvider>

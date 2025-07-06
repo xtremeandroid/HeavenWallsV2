@@ -1,6 +1,7 @@
 "use client";
 import { WallsCard } from "@/components/WallsCard";
 import WallpaperModal from "@/components/WallpaperModal";
+import { API_CONFIG, fetchWithFallback } from "@/config/api";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -74,12 +75,32 @@ export default function CategoryPage() {
   };
 
   const fetchCategoryWallpapers = async ({ pageParam }: { pageParam: number }) => {
-    // In a real app, you'd filter by category
-    // For now, we'll simulate category-specific data
-    const response = await fetch(
-      `https://heaven-walls-api.vercel.app/api/wallhaven/random?page=${pageParam}&category=${slug}`
-    );
-    return response.json();
+    // For category filtering, we'll use the search endpoint with category query
+    const searchQuery = slug === 'all' ? '' : slug;
+    const endpoint = sortBy === 'random' ? API_CONFIG.ENDPOINTS.RANDOM : 
+                    sortBy === 'popular' ? API_CONFIG.ENDPOINTS.TOP : 
+                    API_CONFIG.ENDPOINTS.LATEST;
+    
+    const params: Record<string, any> = { page: pageParam };
+    
+    if (searchQuery && endpoint === API_CONFIG.ENDPOINTS.RANDOM) {
+      // For search with category, use search endpoint
+      const searchParams = {
+        ...params,
+        q: searchQuery,
+        sort: sortBy === 'popular' ? 'toplist' : 'date_added'
+      };
+      const response = await fetchWithFallback(API_CONFIG.ENDPOINTS.SEARCH, searchParams);
+      return response.json();
+    } else {
+      // Use specific endpoint
+      if (sortBy === 'popular') {
+        params.toprange = '1M'; // Top of the month
+      }
+      
+      const response = await fetchWithFallback(endpoint, params);
+      return response.json();
+    }
   };
 
   const {
@@ -103,7 +124,7 @@ export default function CategoryPage() {
     if (inView && !isFetchingNextPage && hasNextPage) {
       fetchNextPage();
     }
-  }, [inView, hasNextPage, isFetchingNextPage]);
+  }, [inView, hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   const handleWallpaperClick = (wallpaper: Wallpaper) => {
     setSelectedWallpaper(wallpaper);
@@ -230,7 +251,7 @@ export default function CategoryPage() {
             )}
             {!hasNextPage && content && (
               <div className="text-center space-y-2">
-                <p className="font-semibold text-gray-400">🎉 You've seen all {category.name} wallpapers!</p>
+                <p className="font-semibold text-gray-400">🎉 You&apos;ve seen all {category.name} wallpapers!</p>
                 <p className="text-gray-500 text-sm">Check back later for new additions</p>
               </div>
             )}
