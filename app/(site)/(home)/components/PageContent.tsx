@@ -1,5 +1,6 @@
 import { WallsCard } from "@/components/WallsCard";
 import WallpaperModal from "@/components/WallpaperModal";
+import { WallpaperGridSkeleton } from "@/components/Skeletons";
 import useWallsCartStore from "@/store/wallsCart.store";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
@@ -70,10 +71,30 @@ export default function PageContent() {
 
   if (status === "pending")
     return (
-      <div className="min-h-screen flex justify-center items-center font-medium text-2xl">
-        <div className="flex flex-col items-center space-y-4">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
-          <p>Loading amazing wallpapers...</p>
+      <div className="min-h-screen p-4 md:p-8">
+        {/* Header Section Skeleton */}
+        <div className="max-w-7xl mx-auto mb-8">
+          <div className="text-center space-y-4">
+            <div className="h-10 bg-gray-800 rounded-lg w-96 mx-auto animate-pulse"></div>
+            <div className="h-6 bg-gray-800 rounded-lg w-2/3 mx-auto animate-pulse"></div>
+          </div>
+          
+          {/* Stats Skeleton */}
+          <div className="flex justify-center mt-8">
+            <div className="flex space-x-8 text-center">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="animate-pulse">
+                  <div className="h-8 w-16 bg-gray-800 rounded mb-2"></div>
+                  <div className="h-4 w-20 bg-gray-800 rounded"></div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Wallpapers Grid Skeleton */}
+        <div className="max-w-7xl mx-auto">
+          <WallpaperGridSkeleton count={20} />
         </div>
       </div>
     );
